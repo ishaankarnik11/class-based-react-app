@@ -66,13 +66,17 @@ export default class NewsContainer extends Component {
     }
 
     async getArticles(){
+      this.props.updateLoaderWidth("20vw","3px");
       let newsURL = `https://newsapi.org/v2/top-headlines?country=in&apiKey=05c66ccf6a944cfe985cdd90f009ac66&page=${this.state.page}&pageSize=${this.state.pageSize}&category=${this.state.catagory}`;
       console.log(newsURL);
       let data = await fetch(newsURL);
+      this.props.updateLoaderWidth("50vw","3px");
       let parsedData = await data.json();
+      this.props.updateLoaderWidth("70vw","3px");
       console.log(parsedData);
       this.setState({articles: [...this.state.articles,...parsedData.articles], totalArticles: parsedData.totalResults,page: this.state.page + 1});
-      
+      this.props.updateLoaderWidth("100vw","3px");
+      this.props.updateLoaderWidth("0","0");
     }
 
     fetchMoreData = async () => {
