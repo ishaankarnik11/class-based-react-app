@@ -2,11 +2,12 @@ import React, { Component } from 'react';
 import NewsItem from './NewsItem';
 import response from '../data/sampleAPIResponse';
 import Spinner from './Spinner';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default class NewsContainer extends Component {
 
-    constructor(){
-        super();
+    constructor(props){
+        super(props);
         console.log("constructor");
         // console.log(this.props);
         this.state = {
@@ -15,19 +16,19 @@ export default class NewsContainer extends Component {
             loading: false,
             page: 1,
             totalArticles: 0,
-            pageSize: 20,
-            catagory: ""
+            pageSize: this.props.pageSize,
+            catagory: this.props.catagory
         };
+        this.getArticles();
     }
 
     async componentDidMount(){
-        
         console.log("componentDidMount");
-        await this.setState({pageSize: this.props.pageSize, catagory: this.props.catagory});
+        // await this.setState({pageSize: this.props.pageSize, catagory: this.props.catagory});
         document.title = `News Monkey ${this.capitalizeFirstLetter(this.props.catagory)}`;
-        await this.getArticles();
-        
     }
+
+    
 
     capitalizeFirstLetter = string => {
       return string.charAt(0).toUpperCase() + string.slice(1);
@@ -70,19 +71,35 @@ export default class NewsContainer extends Component {
       let data = await fetch(newsURL);
       let parsedData = await data.json();
       console.log(parsedData);
-      this.setState({articles: parsedData.articles, totalArticles: parsedData.totalResults});
+      this.setState({articles: [...this.state.articles,...parsedData.articles], totalArticles: parsedData.totalResults,page: this.state.page + 1});
       
     }
+
+    fetchMoreData = async () => {
+      console.log("fetchMoreData");
+      console.log("page value " + this.state.page);
+      console.log(`this.state.articles.length ${this.state.articles.length} !== this.state.totalArticles ${this.state.totalArticles}`);
+
+        // await this.setState({page: this.state.page + 1});
+        await this.getArticles();
+    };
 
   render() {
     console.log("render");
     return (
       <div className="news-home">
       <h1 id="news-home--heading" className="display-4 news-home--heading">Top {this.capitalizeFirstLetter(this.props.catagory)} Headlines</h1>
-      {this.state.loading && <Spinner />}
-      <div className='news-item-container'>
-      { !this.state.loading && 
-        this.state.articles
+      {/* {this.state.loading && <Spinner />} */}
+      
+      <InfiniteScroll
+          dataLength={this.state.articles.length}
+          next={this.fetchMoreData}
+          hasMore={this.state.articles.length !== this.state.totalArticles}
+          loader={<Spinner />}
+          endMessage={<p className='text-center'>Nothing more to load</p>}
+        >
+        <div className='news-item-container'>
+      { this.state.articles
         .map((article,index)=>
             <NewsItem 
                 key={index} 
@@ -95,8 +112,10 @@ export default class NewsContainer extends Component {
                 />
             )
         }
-      </div>
-      <div className="news-home-buttons my-3 mx-2">
+        </div>
+        </InfiniteScroll>
+      
+      {/* <div className="news-home-buttons my-3 mx-2">
         <button id="news-home-buttons-prev" 
         disabled={this.state.page === 1 ? true : false}
         className="btn btn-dark btn-md news-home-buttons-prev"
@@ -109,7 +128,7 @@ export default class NewsContainer extends Component {
         onClick={this.handleNextClick}>
         Next &rarr;
         </button>
-      </div>
+      </div> */}
       </div>
     )
   }
